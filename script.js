@@ -241,3 +241,4 @@ window.addEventListener('scroll', () => {
         element.style.transform = `translateY(${rate * 0.1}px)`;
     });
 });
+

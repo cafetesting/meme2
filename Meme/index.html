@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Meme Generator</h1>
+            <p>Upload an image and add text to create your meme</p>
+        </header>
+
+        <main>
+            <!-- Image Upload Section -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <label for="imageInput" class="upload-label">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Click to upload or drag and drop</p>
+                        <p class="upload-hint">PNG, JPG, GIF, WEBP up to 10MB</p>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Canvas Section -->
+            <div class="canvas-section" id="canvasSection" style="display: none;">
+                <div class="canvas-container">
+                    <canvas id="memeCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-section" id="controlsSection" style="display: none;">
+                <div class="controls-header">
+                    <h2>Text Controls</h2>
+                    <button id="addTextBtn" class="btn btn-primary">+ Add Text</button>
+                </div>
+
+                <div class="text-controls-list" id="textControlsList">
+                    <!-- Text controls will be dynamically added here -->
+                </div>
+
+                <div class="download-section">
+                    <button id="downloadBtn" class="btn btn-download">Download Meme</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
