@@ -10,6 +10,7 @@ class MemeGenerator {
         this.addTextBtn = document.getElementById('addTextBtn');
         this.downloadBtn = document.getElementById('downloadBtn');
         this.textControlsList = document.getElementById('textControlsList');
+        this.templatesGrid = document.getElementById('templatesGrid');
         
         this.image = null;
         this.texts = [];
@@ -18,10 +19,19 @@ class MemeGenerator {
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         
+        // Template images from Asset folder
+        this.templates = [
+            'Asset/Drake-Hotline-Bling.jpg',
+            'Asset/meme-1764487632008.png'
+        ];
+        
         this.init();
     }
     
     init() {
+        // Load templates
+        this.loadTemplates();
+        
         // File input change event
         this.imageInput.addEventListener('change', (e) => this.handleImageSelect(e));
         
@@ -49,6 +59,47 @@ class MemeGenerator {
         this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
         this.canvas.addEventListener('touchend', () => this.handleTouchEnd());
+    }
+    
+    loadTemplates() {
+        this.templates.forEach((templatePath, index) => {
+            const templateItem = document.createElement('div');
+            templateItem.className = 'template-item';
+            templateItem.dataset.templateIndex = index;
+            
+            const img = document.createElement('img');
+            img.src = templatePath;
+            img.alt = `Template ${index + 1}`;
+            img.loading = 'lazy';
+            
+            // Handle image load error
+            img.onerror = () => {
+                templateItem.style.display = 'none';
+            };
+            
+            templateItem.appendChild(img);
+            templateItem.addEventListener('click', () => this.selectTemplate(templatePath));
+            
+            this.templatesGrid.appendChild(templateItem);
+        });
+    }
+    
+    selectTemplate(templatePath) {
+        const img = new Image();
+        img.onload = () => {
+            this.image = img;
+            this.setupCanvas();
+            this.canvasSection.style.display = 'block';
+            this.controlsSection.style.display = 'block';
+            this.render();
+            
+            // Scroll to canvas section
+            this.canvasSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+        img.onerror = () => {
+            alert('Failed to load template image. Please try another template or upload your own image.');
+        };
+        img.src = templatePath;
     }
     
     handleImageSelect(e) {
@@ -122,12 +173,54 @@ class MemeGenerator {
             y: this.canvas.height / 2,
             fontSize: 40,
             fontFamily: 'Impact, Arial Black, sans-serif',
-            color: '#ffffff'
+            color: '#ffffff',
+            maxWidth: this.canvas.width * 0.9 // Default to 90% of canvas width
         };
         
         this.texts.push(textObj);
         this.createTextControl(textObj);
         this.render();
+    }
+    
+    wrapText(text, maxWidth) {
+        if (!text.content || text.content.trim() === '') {
+            return [''];
+        }
+        
+        // Split text into words
+        const words = text.content.split(' ');
+        const lines = [];
+        
+        if (words.length === 0) {
+            return [''];
+        }
+        
+        let currentLine = words[0];
+        this.ctx.font = `${text.fontSize}px ${text.fontFamily}`;
+        
+        // Handle single word that's too long
+        const singleWordWidth = this.ctx.measureText(currentLine).width;
+        if (singleWordWidth > maxWidth && words.length === 1) {
+            // For very long single words, we can't break them, so return as-is
+            return [currentLine];
+        }
+        
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const testLine = currentLine + ' ' + word;
+            const metrics = this.ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            
+            if (testWidth > maxWidth && currentLine.length > 0) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        lines.push(currentLine);
+        
+        return lines;
     }
     
     createTextControl(textObj) {
@@ -159,7 +252,16 @@ class MemeGenerator {
                 <input type="color" class="color-input" value="${textObj.color}" 
                        onchange="memeGenerator.updateText(${textObj.id}, 'color', this.value)">
             </div>
-            <div class="position-hint">💡 Click and drag text on canvas to position it</div>
+            <div class="control-group">
+                <label>Max Width (for line wrapping)</label>
+                <div class="size-control">
+                    <input type="range" class="size-slider" min="100" max="${Math.round(this.canvas.width * 0.95)}" value="${Math.round(textObj.maxWidth || this.canvas.width * 0.9)}" 
+                           oninput="memeGenerator.updateText(${textObj.id}, 'maxWidth', this.value); 
+                                    this.nextElementSibling.textContent = Math.round(this.value) + 'px'">
+                    <span class="size-value">${Math.round(textObj.maxWidth || this.canvas.width * 0.9)}px</span>
+                </div>
+            </div>
+            <div class="position-hint">💡 Click and drag text on canvas to position it. Text automatically wraps to fit width.</div>
         `;
         
         this.textControlsList.appendChild(controlItem);
@@ -168,7 +270,7 @@ class MemeGenerator {
     updateText(id, field, value) {
         const textObj = this.texts.find(t => t.id === id);
         if (textObj) {
-            if (field === 'fontSize') {
+            if (field === 'fontSize' || field === 'maxWidth') {
                 textObj[field] = parseInt(value);
             } else {
                 textObj[field] = value;
@@ -191,15 +293,23 @@ class MemeGenerator {
         for (let i = this.texts.length - 1; i >= 0; i--) {
             const text = this.texts[i];
             this.ctx.font = `${text.fontSize}px ${text.fontFamily}`;
-            const metrics = this.ctx.measureText(text.content);
-            const textWidth = metrics.width;
-            const textHeight = text.fontSize;
             
-            // Approximate bounding box (centered text)
-            const left = text.x - textWidth / 2;
-            const right = text.x + textWidth / 2;
-            const top = text.y - textHeight / 2;
-            const bottom = text.y + textHeight / 2;
+            // Get wrapped lines
+            const lines = this.wrapText(text, text.maxWidth || this.canvas.width * 0.9);
+            const lineHeight = text.fontSize * 1.2; // Line spacing
+            const totalHeight = lines.length * lineHeight;
+            
+            // Calculate bounding box for multi-line text
+            let maxWidth = 0;
+            lines.forEach(line => {
+                const metrics = this.ctx.measureText(line);
+                maxWidth = Math.max(maxWidth, metrics.width);
+            });
+            
+            const left = text.x - maxWidth / 2;
+            const right = text.x + maxWidth / 2;
+            const top = text.y - totalHeight / 2;
+            const bottom = text.y + totalHeight / 2;
             
             if (x >= left && x <= right && y >= top && y <= bottom) {
                 return text;
@@ -314,16 +424,32 @@ class MemeGenerator {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
+        // Wrap text into multiple lines
+        const maxWidth = text.maxWidth || this.canvas.width * 0.9;
+        const lines = this.wrapText(text, maxWidth);
+        const lineHeight = text.fontSize * 1.2; // Line spacing
+        const totalHeight = lines.length * lineHeight;
+        
+        // Starting Y position (centered)
+        let y = text.y - (totalHeight / 2) + (lineHeight / 2);
+        
         // Draw black stroke (border) - made thicker
         this.ctx.strokeStyle = 'black';
         this.ctx.lineWidth = Math.max(5, text.fontSize / 8);
         this.ctx.lineJoin = 'round';
         this.ctx.miterLimit = 2;
-        this.ctx.strokeText(text.content, text.x, text.y);
         
         // Draw fill with selected color
         this.ctx.fillStyle = text.color || '#ffffff';
-        this.ctx.fillText(text.content, text.x, text.y);
+        
+        // Draw each line
+        lines.forEach(line => {
+            // Draw stroke
+            this.ctx.strokeText(line, text.x, y);
+            // Draw fill
+            this.ctx.fillText(line, text.x, y);
+            y += lineHeight;
+        });
     }
     
     downloadMeme() {

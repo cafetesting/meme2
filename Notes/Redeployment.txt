@@ -1,0 +1,92 @@
+REDEPLOYMENT GUIDE: When Changes Require Server Restart vs Browser Refresh
+================================================================================
+
+NO REDEPLOYMENT NEEDED (Just Refresh Browser)
+----------------------------------------------
+
+Static Files (Client-Side):
+- HTML, CSS, JavaScript files that are served as-is
+- Images, fonts, and other assets
+- Frontend-only changes (UI, styling, client-side logic)
+- Why: The server just reads files from disk; a browser refresh loads the new files
+
+Example: Your Meme Generator
+- Editing styles.css → refresh browser
+- Editing script.js → refresh browser
+- Editing index.html → refresh browser
+
+
+REDEPLOYMENT NEEDED
+-------------------
+
+Server-Side Code:
+- Backend code (Python, Node.js, PHP, etc.)
+- Server configuration files
+- Database schema changes
+- Environment variables/config changes
+- Why: The server process must reload to pick up changes
+
+Examples:
+- Python Flask/Django app: restart the server
+- Node.js Express app: restart the server
+- PHP: may need to restart the web server
+- Database migrations: run migration scripts
+
+Build/Compilation Steps:
+- TypeScript → JavaScript compilation
+- Sass/Less → CSS compilation
+- Bundling (Webpack, Vite, etc.)
+- Why: The server needs to rebuild before serving
+
+Infrastructure Changes:
+- Changing ports
+- Adding new dependencies (install packages)
+- Changing server configuration
+- Why: Requires restarting the server process
+
+
+QUICK REFERENCE TABLE
+---------------------
+
+| Change Type                    | Action Needed        |
+|--------------------------------|----------------------|
+| HTML/CSS/JS edits              | Refresh browser      |
+| Frontend JavaScript logic     | Refresh browser      |
+| Styling changes                | Refresh browser      |
+| Backend code changes           | Restart server       |
+| New npm/pip packages           | Install + restart    |
+| Database changes               | Run migrations + restart |
+| Build process changes          | Rebuild + restart    |
+| Server config changes          | Restart server       |
+
+
+YOUR CURRENT SETUP
+------------------
+
+You're using a simple HTTP server (python3 -m http.server) that serves static files.
+This means:
+- No redeployment needed for HTML/CSS/JS changes
+- Just refresh the browser
+- Only restart the server if it crashes or you change the port
+
+
+REAL-WORLD ANALOGY
+-------------------
+
+- Static files = changing a document: edit, save, refresh to view
+- Server code = changing a recipe: edit, save, restart the cooking process
+
+
+WHEN YOU MOVE TO PRODUCTION
+----------------------------
+
+- Static sites: deploy files, no server restart needed
+- Server apps: deploy code, restart the server
+- Modern frameworks: often rebuild bundles, then deploy
+
+
+SUMMARY FOR YOUR MEME GENERATOR
+---------------------------------
+
+For your meme generator, keep editing and refreshing - no redeployment needed!
+
