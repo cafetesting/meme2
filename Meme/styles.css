@@ -194,6 +194,24 @@ body {
     border: 2px solid #F5C857;
 }
 
+.canvas-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.canvas-wrapper canvas {
+    display: block;
+}
+
+.text-boxes-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
 #memeCanvas {
     max-width: 100%;
     max-height: calc(100vh - 200px);
@@ -201,6 +219,92 @@ body {
     cursor: crosshair;
     background: white;
     display: block;
+}
+
+.text-box-overlay {
+    position: absolute;
+    border: 2px dashed rgba(226, 133, 46, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+    pointer-events: all;
+    cursor: move;
+    box-sizing: border-box;
+}
+
+.text-box-overlay.selected {
+    border: 2px solid #E2852E;
+    background: rgba(226, 133, 46, 0.1);
+    box-shadow: 0 0 0 2px rgba(226, 133, 46, 0.3);
+}
+
+.text-box-delete {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #E2852E;
+    color: white;
+    border: 2px solid white;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.text-box-delete:hover {
+    background: #c8751f;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #E2852E;
+    border: 2px solid white;
+    border-radius: 50%;
+    pointer-events: all;
+    cursor: nwse-resize;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.resize-handle-nw {
+    top: -6px;
+    left: -6px;
+    cursor: nwse-resize;
+}
+
+.resize-handle-ne {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+}
+
+.resize-handle-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+}
+
+.resize-handle-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+}
+
+.resize-handle:hover {
+    background: #c8751f;
+    transform: scale(1.2);
 }
 
 /* Bottom Toolbar */
@@ -258,6 +362,13 @@ body {
     border-color: #E2852E;
     background: #F5C857;
     box-shadow: 0 2px 8px rgba(226, 133, 46, 0.2);
+}
+
+.text-control-item.active {
+    border-color: #E2852E;
+    background: #F5C857;
+    box-shadow: 0 2px 8px rgba(226, 133, 46, 0.3);
+    border-width: 2px;
 }
 
 .text-control-header {
