@@ -7,6 +7,7 @@ class MemeGenerator {
         this.uploadArea = document.getElementById('uploadArea');
         this.canvasSection = document.getElementById('canvasSection');
         this.controlsSection = document.getElementById('controlsSection');
+        this.emptyState = document.getElementById('emptyState');
         this.addTextBtn = document.getElementById('addTextBtn');
         this.downloadBtn = document.getElementById('downloadBtn');
         this.textControlsList = document.getElementById('textControlsList');
@@ -89,12 +90,10 @@ class MemeGenerator {
         img.onload = () => {
             this.image = img;
             this.setupCanvas();
-            this.canvasSection.style.display = 'block';
+            this.canvasSection.style.display = 'flex';
             this.controlsSection.style.display = 'block';
+            this.emptyState.style.display = 'none';
             this.render();
-            
-            // Scroll to canvas section
-            this.canvasSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         };
         img.onerror = () => {
             alert('Failed to load template image. Please try another template or upload your own image.');
@@ -136,8 +135,9 @@ class MemeGenerator {
             img.onload = () => {
                 this.image = img;
                 this.setupCanvas();
-                this.canvasSection.style.display = 'block';
+                this.canvasSection.style.display = 'flex';
                 this.controlsSection.style.display = 'block';
+                this.emptyState.style.display = 'none';
                 this.render();
             };
             img.src = e.target.result;
@@ -229,17 +229,12 @@ class MemeGenerator {
         controlItem.dataset.textId = textObj.id;
         
         controlItem.innerHTML = `
-            <div class="text-control-header">
-                <h3>Text ${textObj.id}</h3>
-                <button class="remove-text-btn" onclick="memeGenerator.removeText(${textObj.id})">Remove</button>
-            </div>
             <div class="control-group">
-                <label>Text Content</label>
                 <input type="text" class="text-input" data-field="content" value="${textObj.content}" 
+                       placeholder="Text ${textObj.id}"
                        oninput="memeGenerator.updateText(${textObj.id}, 'content', this.value)">
             </div>
             <div class="control-group">
-                <label>Font Size</label>
                 <div class="size-control">
                     <input type="range" class="size-slider" min="20" max="100" value="${textObj.fontSize}" 
                            oninput="memeGenerator.updateText(${textObj.id}, 'fontSize', this.value); 
@@ -248,12 +243,10 @@ class MemeGenerator {
                 </div>
             </div>
             <div class="control-group">
-                <label>Text Color</label>
                 <input type="color" class="color-input" value="${textObj.color}" 
                        onchange="memeGenerator.updateText(${textObj.id}, 'color', this.value)">
             </div>
             <div class="control-group">
-                <label>Max Width (for line wrapping)</label>
                 <div class="size-control">
                     <input type="range" class="size-slider" min="100" max="${Math.round(this.canvas.width * 0.95)}" value="${Math.round(textObj.maxWidth || this.canvas.width * 0.9)}" 
                            oninput="memeGenerator.updateText(${textObj.id}, 'maxWidth', this.value); 
@@ -261,7 +254,7 @@ class MemeGenerator {
                     <span class="size-value">${Math.round(textObj.maxWidth || this.canvas.width * 0.9)}px</span>
                 </div>
             </div>
-            <div class="position-hint">💡 Click and drag text on canvas to position it. Text automatically wraps to fit width.</div>
+            <button class="remove-text-btn" onclick="memeGenerator.removeText(${textObj.id})" title="Remove text">×</button>
         `;
         
         this.textControlsList.appendChild(controlItem);
