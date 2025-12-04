@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { deleteMeme } from '@/app/(main)/memes/actions'
 
 interface DeleteMemeButtonProps {
   memeId: string
-  onDelete: () => Promise<void>
+  imageUrl: string
 }
 
-export default function DeleteMemeButton({ memeId, onDelete }: DeleteMemeButtonProps) {
+export default function DeleteMemeButton({ memeId, imageUrl }: DeleteMemeButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function DeleteMemeButton({ memeId, onDelete }: DeleteMemeButtonP
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await onDelete()
+      await deleteMeme(imageUrl, memeId)
       router.push('/memes')
       router.refresh()
     } catch (error) {

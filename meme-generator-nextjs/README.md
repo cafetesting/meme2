@@ -109,11 +109,19 @@ USING (
 
 ### 6. Configure OAuth (Optional)
 
-For OAuth providers (Google, GitHub), you'll need to:
+For OAuth providers (Google, GitHub), see the detailed guide:
 
-1. Set up OAuth apps with Google/GitHub
-2. Add credentials to Supabase config or environment variables
-3. Update `supabase/config.toml` with OAuth client IDs and secrets
+**Quick Setup:**
+```bash
+./setup-google-oauth.sh
+```
+
+**Detailed Guide:** See [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md)
+
+The setup involves:
+1. Creating OAuth credentials in Google Cloud Console (you need to do this)
+2. Setting environment variables for Supabase
+3. Restarting Supabase to apply changes
 
 ### 7. Run Development Server
 

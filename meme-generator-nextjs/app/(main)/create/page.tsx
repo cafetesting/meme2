@@ -13,12 +13,7 @@ export default async function CreatePage() {
     redirect('/login')
   }
 
-  const handleSave = async (
-    imageBlob: Blob,
-    texts: any[],
-    isPublic: boolean,
-    title?: string
-  ) => {
+  const handleSave = async (formData: FormData) => {
     'use server'
 
     const supabase = await createClient()
@@ -29,6 +24,18 @@ export default async function CreatePage() {
     if (!user) {
       throw new Error('Not authenticated')
     }
+
+    // Extract data from FormData
+    const imageBlob = formData.get('image') as Blob
+    const textsJson = formData.get('texts') as string
+    const isPublic = formData.get('isPublic') === 'true'
+    const title = formData.get('title') as string | null
+
+    if (!imageBlob) {
+      throw new Error('Image blob is required')
+    }
+
+    const texts = JSON.parse(textsJson || '[]')
 
     // Upload image to Supabase Storage
     const fileName = `${user.id}/${Date.now()}.png`
@@ -66,7 +73,7 @@ export default async function CreatePage() {
 
     // Save text overlays
     if (texts.length > 0) {
-      const textInserts = texts.map((text, index) => ({
+      const textInserts = texts.map((text: any, index: number) => ({
         meme_id: meme.id,
         content: text.content,
         x: text.x,

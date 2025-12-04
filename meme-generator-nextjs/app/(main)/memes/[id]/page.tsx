@@ -44,12 +44,7 @@ export default async function EditMemePage({ params }: EditMemePageProps) {
     console.error('Error fetching texts:', textsError)
   }
 
-  const handleSave = async (
-    imageBlob: Blob,
-    texts: any[],
-    isPublic: boolean,
-    title?: string
-  ) => {
+  const handleSave = async (formData: FormData) => {
     'use server'
 
     const supabase = await createClient()
@@ -60,6 +55,18 @@ export default async function EditMemePage({ params }: EditMemePageProps) {
     if (!user) {
       throw new Error('Not authenticated')
     }
+
+    // Extract data from FormData
+    const imageBlob = formData.get('image') as Blob
+    const textsJson = formData.get('texts') as string
+    const isPublic = formData.get('isPublic') === 'true'
+    const title = formData.get('title') as string | null
+
+    if (!imageBlob) {
+      throw new Error('Image blob is required')
+    }
+
+    const texts = JSON.parse(textsJson || '[]')
 
     // Delete old image
     const oldFileName = meme.image_url.split('/').pop()
@@ -104,7 +111,7 @@ export default async function EditMemePage({ params }: EditMemePageProps) {
 
     // Insert new texts
     if (texts.length > 0) {
-      const textInserts = texts.map((text, index) => ({
+      const textInserts = texts.map((text: any, index: number) => ({
         meme_id: params.id,
         content: text.content,
         x: text.x,
@@ -127,34 +134,15 @@ export default async function EditMemePage({ params }: EditMemePageProps) {
     }
   }
 
-  const handleDelete = async () => {
-    'use server'
-
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      throw new Error('Not authenticated')
-    }
-
-    // Delete image from storage
-    const fileName = meme.image_url.split('/').pop()
-    if (fileName) {
-      await supabase.storage.from('meme-images').remove([`${user.id}/${fileName}`])
-    }
-
-    // Delete meme (cascade will delete texts)
-    await supabase.from('memes').delete().eq('id', params.id)
-  }
-
   return (
     <>
       <Navbar />
       <div className="relative">
         <div className="absolute top-4 right-4 z-50">
-          <DeleteMemeButton memeId={params.id} onDelete={handleDelete} />
+          <DeleteMemeButton 
+            memeId={params.id}
+            imageUrl={meme.image_url}
+          />
         </div>
         <MemeEditor
           initialImage={meme.image_url}

@@ -14,7 +14,7 @@ interface MemeEditorProps {
   initialImage?: string | null
   initialTexts?: MemeText[]
   memeId?: string
-  onSave?: (imageBlob: Blob, texts: TextObject[], isPublic: boolean, title?: string) => Promise<void>
+  onSave?: (formData: FormData) => Promise<void>
 }
 
 export default function MemeEditor({ initialImage, initialTexts, memeId, onSave }: MemeEditorProps) {
@@ -411,14 +411,22 @@ export default function MemeEditor({ initialImage, initialTexts, memeId, onSave 
           setSaving(false)
           return
         }
-        await onSave(blob, texts, isPublic, title || undefined)
+        // Convert blob to FormData for Server Action compatibility
+        const formData = new FormData()
+        formData.append('image', blob, 'meme.png')
+        formData.append('texts', JSON.stringify(texts))
+        formData.append('isPublic', String(isPublic))
+        if (title) {
+          formData.append('title', title)
+        }
+        await onSave(formData)
         setSaving(false)
       }, 'image/png')
     } catch (error) {
       console.error('Error saving meme:', error)
       setSaving(false)
     }
-  }, [canvas, image, texts, isPublic, title, onSave])
+  }, [image, texts, isPublic, title, onSave])
 
   const selectedText = texts.find((t) => t.id === selectedTextId)
 
