@@ -205,16 +205,16 @@ export default function MemeEditor({
 			setTexts((prev) =>
 				prev.map((text) => {
 					if (text.id === id) {
-						const updated = { ...text } as any
+						const updated: TextObject = { ...text }
 						if (
 							field === 'font_size' ||
 							field === 'width' ||
 							field === 'height' ||
 							field === 'order'
 						) {
-							updated[field] = parseInt(value)
+							;(updated as any)[field] = parseInt(value)
 						} else {
-							updated[field] = value
+							;(updated as any)[field] = value
 						}
 
 						if (
