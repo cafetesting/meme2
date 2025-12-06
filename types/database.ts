@@ -118,14 +118,9 @@ export interface Database {
 	}
 }
 
-export interface Profile
-	extends Database['public']['Tables']['profiles']['Row'] {}
-export interface Meme
-	extends Database['public']['Tables']['memes']['Row'] {}
-export interface MemeText
-	extends Database['public']['Tables']['meme_texts']['Row'] {}
-export interface MemeInsert
-	extends Database['public']['Tables']['memes']['Insert'] {}
-export interface MemeTextInsert
-	extends Database['public']['Tables']['meme_texts']['Insert'] {}
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Meme = Database['public']['Tables']['memes']['Row']
+export type MemeText = Database['public']['Tables']['meme_texts']['Row']
+export type MemeInsert = Database['public']['Tables']['memes']['Insert']
+export type MemeTextInsert = Database['public']['Tables']['meme_texts']['Insert']
 
