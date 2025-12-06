@@ -4,24 +4,127 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+type PasswordStrength = 'weak' | 'moderate' | 'strong'
+
+function calculatePasswordStrength(password: string): PasswordStrength {
+	if (password.length === 0) return 'weak'
+
+	const hasLowercase = /[a-z]/.test(password)
+	const hasUppercase = /[A-Z]/.test(password)
+	const hasNumbers = /\d/.test(password)
+	const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+
+	const complexityCount =
+		(hasLowercase ? 1 : 0) +
+		(hasUppercase ? 1 : 0) +
+		(hasNumbers ? 1 : 0) +
+		(hasSpecial ? 1 : 0)
+
+	if (password.length < 6 || complexityCount <= 1) {
+		return 'weak'
+	}
+
+	if (
+		password.length >= 9 &&
+		complexityCount >= 3 &&
+		hasLowercase &&
+		hasUppercase &&
+		(hasNumbers || hasSpecial)
+	) {
+		return 'strong'
+	}
+
+	return 'moderate'
+}
+
 export default function SignupForm() {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [username, setUsername] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [emailError, setEmailError] = useState<string | null>(null)
+	const [passwordStrength, setPasswordStrength] =
+		useState<PasswordStrength>('weak')
 	const router = useRouter()
 	const supabase = createClient()
+
+	function validateEmail(emailValue: string): boolean {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		return emailRegex.test(emailValue)
+	}
+
+	function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const emailValue = e.target.value
+		setEmail(emailValue)
+
+		if (emailValue && !validateEmail(emailValue)) {
+			setEmailError('Please enter a valid email address')
+		} else {
+			setEmailError(null)
+		}
+	}
+
+	function handleEmailBlur() {
+		if (email && !validateEmail(email)) {
+			setEmailError('Please enter a valid email address')
+		}
+	}
+
+	function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const passwordValue = e.target.value
+		setPassword(passwordValue)
+		setPasswordStrength(calculatePasswordStrength(passwordValue))
+	}
 
 	async function handleSignup(e: React.FormEvent) {
 		e.preventDefault()
 		setLoading(true)
 		setError(null)
+		setEmailError(null)
+
+		// Validate username
+		if (!username.trim()) {
+			setError('Username is required')
+			setLoading(false)
+			return
+		}
+
+		// Validate email
+		if (!validateEmail(email)) {
+			setEmailError('Please enter a valid email address')
+			setError('Please enter a valid email address')
+			setLoading(false)
+			return
+		}
+
+		// Validate password length
+		if (password.length < 6) {
+			setError('Password must be at least 6 characters long')
+			setLoading(false)
+			return
+		}
+
+		// Validate password strength - ensure it's not weak
+		const strength = calculatePasswordStrength(password)
+		if (strength === 'weak') {
+			setError(
+				'Password is too weak. Please use a combination of letters, numbers, and special characters.'
+			)
+			setLoading(false)
+			return
+		}
 
 		const { data, error: signUpError } =
 			await supabase.auth.signUp({
 				email,
 				password,
+				options: {
+					data: {
+						username: username,
+						display_name: username,
+					},
+				},
 			})
 
 		if (signUpError) {
@@ -31,13 +134,29 @@ export default function SignupForm() {
 		}
 
 		if (data.user) {
-			// Create profile
+			// Update user metadata to ensure display_name is set
+			const { error: updateError } = await supabase.auth.updateUser({
+				data: {
+					display_name: username,
+				},
+			})
+
+			if (updateError) {
+				console.error('Error updating user metadata:', updateError)
+			}
+
+			// Use upsert to handle case where trigger already created profile
 			const { error: profileError } = await supabase
 				.from('profiles')
-				.insert({
-					id: data.user.id,
-					username: username || null,
-				})
+				.upsert(
+					{
+						id: data.user.id,
+						username: username,
+					},
+					{
+						onConflict: 'id',
+					}
+				)
 
 			if (profileError) {
 				setError(profileError.message)
@@ -84,13 +203,14 @@ export default function SignupForm() {
 						htmlFor="username"
 						className="block text-sm font-medium mb-2"
 					>
-						Username (optional)
+						Username
 					</label>
 					<input
 						id="username"
 						type="text"
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
+						required
 						className="w-full px-4 py-2 border border-meme-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-meme-accent"
 						placeholder="username"
 					/>
@@ -107,11 +227,19 @@ export default function SignupForm() {
 						id="email"
 						type="email"
 						value={email}
-						onChange={(e) => setEmail(e.target.value)}
+						onChange={handleEmailChange}
+						onBlur={handleEmailBlur}
 						required
-						className="w-full px-4 py-2 border border-meme-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-meme-accent"
+						className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-meme-accent ${
+							emailError
+								? 'border-red-500 focus:ring-red-500'
+								: 'border-meme-accent'
+						}`}
 						placeholder="your@email.com"
 					/>
+					{emailError && (
+						<p className="mt-1 text-sm text-red-600">{emailError}</p>
+					)}
 				</div>
 
 				<div>
@@ -125,12 +253,52 @@ export default function SignupForm() {
 						id="password"
 						type="password"
 						value={password}
-						onChange={(e) => setPassword(e.target.value)}
+						onChange={handlePasswordChange}
 						required
 						minLength={6}
 						className="w-full px-4 py-2 border border-meme-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-meme-accent"
 						placeholder="••••••••"
 					/>
+					{password && (
+						<div className="mt-2">
+							<div className="flex items-center gap-2 mb-1">
+								<div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+									<div
+										className={`h-full transition-all duration-300 ${
+											passwordStrength === 'weak'
+												? 'bg-red-500'
+												: passwordStrength === 'moderate'
+													? 'bg-yellow-500'
+													: 'bg-green-500'
+										}`}
+										style={{
+											width:
+												passwordStrength === 'weak'
+													? '33%'
+													: passwordStrength === 'moderate'
+														? '66%'
+														: '100%',
+										}}
+									/>
+								</div>
+								<span
+									className={`text-xs font-medium ${
+										passwordStrength === 'weak'
+											? 'text-red-600'
+											: passwordStrength === 'moderate'
+												? 'text-yellow-600'
+												: 'text-green-600'
+									}`}
+								>
+									{passwordStrength === 'weak'
+										? 'Weak'
+										: passwordStrength === 'moderate'
+											? 'Moderate'
+											: 'Strong'}
+								</span>
+							</div>
+						</div>
+					)}
 				</div>
 
 				<button

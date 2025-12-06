@@ -40,6 +40,7 @@ next-env.d.ts
 
 # supabase
 .supabase/
+supabase/.branches/
 
 # IDE
 .vscode/

@@ -6,7 +6,11 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint"
+		"lint": "next lint",
+		"memestart": "concurrently \"supabase start\" \"npm run dev\"",
+		"memerestart": "bash memerestart.sh",
+		"list-users": "node scripts/list-users.js",
+		"delete-user": "node scripts/delete-user.js"
 	},
 	"dependencies": {
 		"next": "^14.0.0",
@@ -23,7 +27,8 @@
 		"typescript": "^5.0.0",
 		"tailwindcss": "^3.3.0",
 		"postcss": "^8.4.0",
-		"autoprefixer": "^10.4.0"
+		"autoprefixer": "^10.4.0",
+		"concurrently": "^8.2.2"
 	}
 }
 
