@@ -134,37 +134,11 @@ export default function SignupForm() {
 		}
 
 		if (data.user) {
-			// Update user metadata to ensure display_name is set
-			const { error: updateError } = await supabase.auth.updateUser({
-				data: {
-					display_name: username,
-				},
-			})
-
-			if (updateError) {
-				console.error('Error updating user metadata:', updateError)
-			}
-
-			// Use upsert to handle case where trigger already created profile
-			const { error: profileError } = await supabase
-				.from('profiles')
-				.upsert(
-					{
-						id: data.user.id,
-						username: username,
-					},
-					{
-						onConflict: 'id',
-					}
-				)
-
-			if (profileError) {
-				setError(profileError.message)
-				setLoading(false)
-			} else {
-				router.push('/create')
-				router.refresh()
-			}
+			// The trigger will automatically create the profile from user metadata
+			// We've already set username in the signUp options, so the trigger will use it
+			// Redirect to create page - profile will be created by trigger
+			router.push('/create')
+			router.refresh()
 		}
 	}
 
