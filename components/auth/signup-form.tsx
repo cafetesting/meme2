@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { ensureProfile } from '@/app/(auth)/signup/actions'
 
 type PasswordStrength = 'weak' | 'moderate' | 'strong'
 
@@ -134,9 +135,32 @@ export default function SignupForm() {
 		}
 
 		if (data.user) {
-			// The trigger will automatically create the profile from user metadata
-			// We've already set username in the signUp options, so the trigger will use it
-			// Redirect to create page - profile will be created by trigger
+			// Wait a moment for the trigger to create the profile
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+
+			// Verify that the profile was created by the trigger
+			const { data: profileData, error: profileError } = await supabase
+				.from('profiles')
+				.select('id')
+				.eq('id', data.user.id)
+				.single()
+
+			if (profileError || !profileData) {
+				// Profile wasn't created by trigger - use server action as fallback
+				const result = await ensureProfile(data.user.id, username)
+
+				if (!result.success) {
+					// Both trigger and server action failed
+					setError(
+						'Account created but profile setup failed. Please try logging in or contact support.'
+					)
+					setLoading(false)
+					console.error('Profile creation failed:', result.error)
+					return
+				}
+			}
+
+			// Profile exists - safe to redirect
 			router.push('/create')
 			router.refresh()
 		}
