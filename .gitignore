@@ -62,3 +62,9 @@ logs
 *.temp
 .cache/
 
+# Admin-only scripts (local use only)
+scripts/load-env-prod.js
+scripts/delete-user.js
+scripts/list-users.js
+scripts/README.md
+
