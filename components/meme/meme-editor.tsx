@@ -60,10 +60,10 @@ export default function MemeEditor({
 	const textBoxesOverlayRef = useRef<HTMLDivElement>(null)
 	const nextTextIdRef = useRef(1)
 
-	const templates = [
-		'/templates/Drake-Hotline-Bling.jpg',
-		'/templates/meme-1764487632008.png',
-	]
+	const templates = Array.from(
+		{ length: 34 },
+		(_, i) => `/templates/Template${i + 1}.jpg`
+	)
 
 	// Load initial image and texts if provided
 	useEffect(() => {
