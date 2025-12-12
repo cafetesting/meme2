@@ -208,9 +208,11 @@ To enable Google/GitHub OAuth:
 
 1. Go to Google Cloud Console
 2. Create OAuth 2.0 credentials
-3. Add authorized redirect URI:
-   `http://localhost:54321/auth/v1/callback` (local)
-   `https://your-project.supabase.co/auth/v1/callback` (production)
+3. Add authorized redirect URIs:
+   - `http://localhost:54321/auth/v1/callback` (local)
+   - `https://your-project.supabase.co/auth/v1/callback` (Supabase)
+   - `https://meme-gen.cursorapp.fun/auth/callback` (production)
+   - `https://staging-meme-gen.cursorapp.fun/auth/callback` (staging)
 4. Set environment variables in Supabase:
    - `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID`
    - `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`
@@ -219,12 +221,18 @@ To enable Google/GitHub OAuth:
 
 1. Go to GitHub Settings > Developer settings > OAuth Apps
 2. Create new OAuth App
-3. Set Authorization callback URL:
-   `http://localhost:54321/auth/v1/callback` (local)
-   `https://your-project.supabase.co/auth/v1/callback` (production)
+3. Set Authorization callback URLs:
+   - `http://localhost:54321/auth/v1/callback` (local)
+   - `https://your-project.supabase.co/auth/v1/callback` (Supabase)
+   - `https://meme-gen.cursorapp.fun/auth/callback` (production)
+   - `https://staging-meme-gen.cursorapp.fun/auth/callback` (staging)
 4. Set environment variables in Supabase:
    - `SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID`
    - `SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET`
+
+### Domain Setup
+
+For detailed instructions on setting up custom domains (`meme-gen.cursorapp.fun` and `staging.meme-gen.cursorapp.fun`), see [DOMAIN_SETUP.md](./DOMAIN_SETUP.md).
 
 ## Troubleshooting
 

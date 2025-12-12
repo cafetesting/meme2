@@ -8,6 +8,7 @@ import {
 } from 'react'
 import MemeCanvas from './meme-canvas'
 import TextBoxOverlay from './text-box-overlay'
+import ImageCropDialog from './image-crop-dialog'
 import { MemeText, Database } from '@/types/database'
 
 export interface TextObject {
@@ -54,6 +55,8 @@ export default function MemeEditor({
 	const [isPublic, setIsPublic] = useState(false)
 	const [title, setTitle] = useState('')
 	const [saving, setSaving] = useState(false)
+	const [showCropDialog, setShowCropDialog] = useState(false)
+	const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
 
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 	const canvasWrapperRef = useRef<HTMLDivElement>(null)
@@ -105,12 +108,15 @@ export default function MemeEditor({
 			const canvas = canvasRef.current
 			if (!canvas) return
 
+			// Use actual image dimensions (should be 1080x1080 for standardized images)
+			// But scale display for UI if needed
 			const maxWidth = 800
-			const maxHeight = 600
+			const maxHeight = 800
 
 			let width = img.width
 			let height = img.height
 
+			// Scale down for display if image is larger than max display size
 			if (width > maxWidth || height > maxHeight) {
 				const ratio = Math.min(
 					maxWidth / width,
@@ -120,8 +126,9 @@ export default function MemeEditor({
 				height = height * ratio
 			}
 
-			canvas.width = width
-			canvas.height = height
+			// Set canvas to actual image dimensions (not scaled)
+			canvas.width = img.width
+			canvas.height = img.height
 
 			setTimeout(() => {
 				updateCanvasScale()
@@ -265,24 +272,33 @@ export default function MemeEditor({
 		[setupCanvas]
 	)
 
-	const handleImageSelect = useCallback(
-		(file: File) => {
-			if (file && file.type.startsWith('image/')) {
-				const reader = new FileReader()
-				reader.onload = (e) => {
-					const img = new Image()
-					img.onload = () => {
-						setImage(img)
-						setShowCanvas(true)
-						setupCanvas(img)
-					}
-					img.src = e.target?.result as string
-				}
-				reader.readAsDataURL(file)
+	const handleImageSelect = useCallback((file: File) => {
+		if (file && file.type.startsWith('image/')) {
+			// Show crop dialog for user uploads
+			setPendingImageFile(file)
+			setShowCropDialog(true)
+		}
+	}, [])
+
+	const handleCropComplete = useCallback(
+		(croppedImageDataUrl: string) => {
+			const img = new Image()
+			img.onload = () => {
+				setImage(img)
+				setShowCanvas(true)
+				setupCanvas(img)
 			}
+			img.src = croppedImageDataUrl
+			setShowCropDialog(false)
+			setPendingImageFile(null)
 		},
 		[setupCanvas]
 	)
+
+	const handleCropCancel = useCallback(() => {
+		setShowCropDialog(false)
+		setPendingImageFile(null)
+	}, [])
 
 	const getCanvasCoordinates = useCallback(
 		(e: React.MouseEvent | React.TouchEvent) => {
@@ -578,6 +594,15 @@ export default function MemeEditor({
 
 	return (
 		<div className="app-container">
+			{/* Crop Dialog */}
+			{showCropDialog && pendingImageFile && (
+				<ImageCropDialog
+					imageFile={pendingImageFile}
+					onCropComplete={handleCropComplete}
+					onCancel={handleCropCancel}
+				/>
+			)}
+
 			{/* Sidebar */}
 			<aside className="sidebar">
 				<div className="sidebar-section">
