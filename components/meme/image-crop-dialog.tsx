@@ -198,7 +198,6 @@ export default function ImageCropDialog({
 										aspect={1}
 										minWidth={100}
 										minHeight={100}
-										unit="px"
 									>
 										<img
 											ref={imgRef}
