@@ -103,40 +103,6 @@ export default function MemeEditor({
 		}
 	}, [initialImage, initialTexts])
 
-	const setupCanvas = useCallback(
-		(img: HTMLImageElement) => {
-			const canvas = canvasRef.current
-			if (!canvas) return
-
-			// Use actual image dimensions (should be 1080x1080 for standardized images)
-			// But scale display for UI if needed
-			const maxWidth = 800
-			const maxHeight = 800
-
-			let width = img.width
-			let height = img.height
-
-			// Scale down for display if image is larger than max display size
-			if (width > maxWidth || height > maxHeight) {
-				const ratio = Math.min(
-					maxWidth / width,
-					maxHeight / height
-				)
-				width = width * ratio
-				height = height * ratio
-			}
-
-			// Set canvas to actual image dimensions (not scaled)
-			canvas.width = img.width
-			canvas.height = img.height
-
-			setTimeout(() => {
-				updateCanvasScale()
-			}, 0)
-		},
-		[]
-	)
-
 	const updateCanvasScale = useCallback(() => {
 		const canvas = canvasRef.current
 		const overlay = textBoxesOverlayRef.current
@@ -153,6 +119,28 @@ export default function MemeEditor({
 			overlay.style.height = `${rect.height}px`
 		}
 	}, [])
+
+	const setupCanvas = useCallback(
+		(img: HTMLImageElement) => {
+			const canvas = canvasRef.current
+			if (!canvas) return
+
+			// Always set canvas to 1080x1080 for consistent square format
+			// This ensures templates render correctly without distortion
+			const targetSize = 1080
+			canvas.width = targetSize
+			canvas.height = targetSize
+
+			// Ensure canvas is visible and properly sized before updating scale
+			// Use double requestAnimationFrame to ensure CSS has been applied
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					updateCanvasScale()
+				})
+			})
+		},
+		[updateCanvasScale]
+	)
 
 	useEffect(() => {
 		function handleResize() {

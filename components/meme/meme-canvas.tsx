@@ -5,6 +5,7 @@ import {
 	useRef,
 	forwardRef,
 	useImperativeHandle,
+	useState,
 } from 'react'
 import { TextObject } from './meme-editor'
 
@@ -17,6 +18,7 @@ interface MemeCanvasProps {
 const MemeCanvas = forwardRef<HTMLCanvasElement, MemeCanvasProps>(
 	({ image, texts, onScaleUpdate }, ref) => {
 		const canvasRef = useRef<HTMLCanvasElement>(null)
+		const [isCanvasReady, setIsCanvasReady] = useState(false)
 
 		useImperativeHandle(
 			ref,
@@ -94,24 +96,70 @@ const MemeCanvas = forwardRef<HTMLCanvasElement, MemeCanvasProps>(
 			})
 		}
 
+		// Use ResizeObserver to detect when canvas is properly sized
 		useEffect(() => {
 			const canvas = canvasRef.current
-			if (!canvas || !image) return
+			if (!canvas) return
 
-			const ctx = canvas.getContext('2d')
-			if (!ctx) return
-
-			ctx.clearRect(0, 0, canvas.width, canvas.height)
-			ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
-
-			texts.forEach((text) => {
-				drawText(ctx, text)
+			const resizeObserver = new ResizeObserver((entries) => {
+				for (const entry of entries) {
+					const { width, height } = entry.contentRect
+					if (width > 0 && height > 0) {
+						setIsCanvasReady(true)
+					}
+				}
 			})
 
-			if (onScaleUpdate) {
-				onScaleUpdate()
+			resizeObserver.observe(canvas)
+
+			return () => {
+				resizeObserver.disconnect()
 			}
-		}, [image, texts, onScaleUpdate])
+		}, [])
+
+		// Draw image when canvas is ready and image is loaded
+		useEffect(() => {
+			const canvas = canvasRef.current
+			if (!canvas || !image || !isCanvasReady) return
+
+			const ctx = canvas.getContext('2d', { 
+				willReadFrequently: false,
+				alpha: true 
+			})
+			if (!ctx) return
+
+			// Ensure canvas has valid dimensions (should be 1080x1080)
+			if (canvas.width === 0 || canvas.height === 0) {
+				return
+			}
+
+			// Configure context for high-quality rendering
+			ctx.imageSmoothingEnabled = true
+			ctx.imageSmoothingQuality = 'high'
+
+			const drawImage = () => {
+				ctx.clearRect(0, 0, canvas.width, canvas.height)
+				
+				// Draw image to fill the entire canvas (1080x1080)
+				// Templates should be 1080x1080, so this should fit perfectly
+				ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+				texts.forEach((text) => {
+					drawText(ctx, text)
+				})
+			}
+
+			// Draw immediately since canvas is ready
+			drawImage()
+
+			// Update scale after drawing
+			if (onScaleUpdate) {
+				// Small delay to ensure rendering is complete
+				requestAnimationFrame(() => {
+					onScaleUpdate()
+				})
+			}
+		}, [image, texts, isCanvasReady, onScaleUpdate])
 
 		return <canvas ref={canvasRef} id="memeCanvas" />
 	}
